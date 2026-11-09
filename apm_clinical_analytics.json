@@ -1,0 +1,9 @@
+{
+  "apmId": "APM0009842",
+  "applicationName": "Clinical Data Analytics Platform",
+  "riskTier": "GxP-Critical",
+  "soxScope": false,
+  "hostingPlatform": "AWS-Sanofi",
+  "dataClassification": "Restricted-Confidential",
+  "ownerEmail": "nader.shafiei@sanofi.com"
+}
