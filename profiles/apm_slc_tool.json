@@ -1,0 +1,9 @@
+{
+  "apmId": "APM0015629",
+  "applicationName": "Digital Operations Metric Dashboard",
+  "riskTier": "Low",
+  "soxScope": false,
+  "hostingPlatform": "Internal-VM",
+  "dataClassification": "Internal",
+  "ownerEmail": "nader.shafiei@sanofi.com"
+}
