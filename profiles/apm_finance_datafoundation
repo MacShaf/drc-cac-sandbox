@@ -1,0 +1,9 @@
+{
+  "apmId": "APM0004187",
+  "applicationName": "Commercial Finance DataMart",
+  "riskTier": "High",
+  "soxScope": true,
+  "hostingPlatform": "Snowflake-OneMesh",
+  "dataClassification": "Confidential",
+  "ownerEmail": "nader.shafiei@sanofi.com"
+}
