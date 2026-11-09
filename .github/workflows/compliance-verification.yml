@@ -1,0 +1,65 @@
+name: "DRC Compliance Verification Gate"
+
+on:
+  # Triggers automatically when a Pull Request is opened or updated targeting main
+  pull_request:
+    branches: [ "main" ]
+
+  # Allows manual triggering from the GitHub Actions tab to test different APM profiles
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: "Select APM Risk Profile to simulate"
+        required: true
+        default: "profiles/apm_clinical_analytics.json"
+        type: choice
+        options:
+          - "profiles/apm_clinical_analytics.json"
+          - "profiles/apm_finance_datamart.json"
+          - "profiles/apm_internal_ops_tool.json"
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  verify-compliance:
+    name: "DCF Verification (PORT-01, DEL-05, DEL-10)"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: "1. Checkout Source Code"
+        uses: actions/checkout@v4
+
+      - name: "2. Set up Python Environment"
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: "3. Execute DRC Verification Engine (Box 3 & Box 4)"
+        id: run_verification
+        run: |
+          # Use manual input profile if triggered manually, else default to GxP-Critical
+          PROFILE="${{ github.event.inputs.profile || 'profiles/apm_clinical_analytics.json' }}"
+          echo "Executing DRC Verification with profile: $PROFILE"
+          python scripts/verify_control.py "$PROFILE"
+
+      - name: "4. Archive Audit Evidence Artifact (Box 5 / Tier 3)"
+        if: always() # Preserves evidence for both PASS and FAIL audit trails (21 CFR Part 11)
+        uses: actions/upload-artifact@v4
+        with:
+          name: drc-audit-evidence-${{ github.run_id }}
+          path: build/telemetry/verification-evidence.json
+          retention-days: 30
+
+      - name: "5. Post PR Summary Comment"
+        if: github.event_name == 'pull_request' && always()
+        run: |
+          if [ -f "build/telemetry/verification-evidence.json" ]; then
+            RESULT=$(python -c "import json; data=json.load(open('build/telemetry/verification-evidence.json')); print(data.get('overallResult'))")
+            SHA=$(python -c "import json; data=json.load(open('build/telemetry/verification-evidence.json')); print(data.get('integrity',{}).get('payloadSha256','N/A'))")
+            echo "### DRC Compliance Gate: **$RESULT**" >> $GITHUB_STEP_SUMMARY
+            echo "- **Evaluation:** PORT-01, DEL-05, DEL-10" >> $GITHUB_STEP_SUMMARY
+            echo "- **Payload SHA-256:** \`$SHA\`" >> $GITHUB_STEP_SUMMARY
+            echo "- **Audit Evidence:** Stored in workflow artifacts (ODCS v3.1.0)" >> $GITHUB_STEP_SUMMARY
+          fi
